@@ -1,0 +1,61 @@
+INITIALIZE;                            % ****                           00001000          
+%UPDATE;                                                                00002000          
+                                                                        00003000          
+DMSUPPORT      = DMSUPPORT/EMPLOYEEDB ON DISK;                          00004000          
+RECONSTRUCT    = RECONSTRUCT/EMPLOYEEDB ON DISK;                        00005000          
+REORGANIZATION = REORGANIZATION/EMPLOYEEDB ON DISK;                     00006000          
+                                                                        00007000          
+                                                                        00008000          
+DEFAULTS (                                                              00008142          
+   PACK = DISK,                                                         00008284          
+   REBLOCK = TRUE,                                                      00008426          
+   BUFFERS = 4 + 4 PER RANDOM USER OR 8 PER SERIAL USER,                00008568          
+   ALPHA   (INITIALVALUE = BLANKS),                                     00008710          
+   BOOLEAN (INITIALVALUE = FALSE),                                      00008852          
+   NUMBER  (INITIALVALUE = 0 ),                                         00008994          
+   REAL    (INITIALVALUE = 0),                                          00009136          
+                                                                        00009278          
+   DATA SET(                                                            00009420          
+     POPULATIONINCR = 10, % DEFAULT POP INCR WITH MSG                   00009562          
+     POPULATIONWARN = 75  % WARN MSG WHEN 75% FULL                      00009704          
+     )                                                                  00009846          
+   );                                                                   00010000          
+OPTIONS (                                                               00010062          
+       ADDRESSCHECK,                                                    00010124          
+       AUDIT,                                                           00010186          
+       KEYCOMPARE,                                                      00010248          
+       STATISTICS,   %UDAY                                              00010310          
+       RDSSTORE,     % RESTART DATA SET CONTINULY STORE RESTART REC     00010372          
+       INDEPENDENTTRANS,                                                00010434          
+       REAPPLYCOMPLETED                                                 00010496          
+   );                                                                   00010558          
+                                                                        00010620          
+PARAMETERS (                                                            00010682          
+       ALLOWEDCORE = 20000,   % UDAY                                    00010744          
+       OVERLAYGOAL = 0.01,      % UDAY %MEM WRITE2 DISK/MIN(ALLOWEDCORE)00010806          
+       SYNCWAIT = 1 % FOR INFOACCESS                                    00010868          
+   );                                                                   00010930          
+                                                                        00011000          
+AUDIT TRAIL(BLOCKSIZE=5400 BYTES                                        00012000          
+    ,AREAS=50                                                           00013000          
+    ,AREASIZE=100 BLOCKS                                                00014000          
+    ,PACK=DISK                                                          00015000          
+    );                                                                  00016000          
+                                                                        00016500          
+RSTART RESTART DATA SET                                                 00017000          
+(ALPHAID ALPHA(7));                                                     00018000          
+                                                                        00019000          
+EMPLOYEE DATA SET                                                       00020000          
+    (                                                                   00021000          
+        EMP-ID   ALPHA (5);                                             00021500          
+        EMP-NAME ALPHA (10);                                            00022000          
+        EMP-AGE  NUMBER (3);                                            00023000          
+        EMP-CITY ALPHA (10);                                            00024000          
+    ),                                                                  00025000          
+    POPULATION = 100;                                                   00026000          
+                                                                        00027000          
+EMP-ID-SET SET OF EMPLOYEE  KEY (EMP-ID)                                00028000          
+    INDEX SEQUENTIAL                                                    00029000          
+    NO DUPLICATES                                                       00030000          
+    MEMORY RESIDENT = ALL;                                              00031000          
+                                                                        00032000          

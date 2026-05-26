@@ -1,0 +1,114 @@
+001000 IDENTIFICATION DIVISION.                                                     
+002000 PROGRAM-ID.   LOADEMP.                                                       
+003000*AUTHOR.       TEST.                                                          
+004000******************************************************************            
+005000*                                                                *            
+006000* COBOL CLASS - PROGRAM 15                                       *            
+007000*                                                                *            
+008000                                                                              
+022000******************************************************************            
+023000                                                                              
+024000 ENVIRONMENT DIVISION.                                                        
+025000 CONFIGURATION SECTION.                                                       
+026000 SOURCE-COMPUTER. A-SERIES.                                                   
+027000 OBJECT-COMPUTER. A-SERIES,                                                   
+028000     SEGMENT-LIMIT IS 49.                                                     
+029000*    SEGMENT-LIMIT IS 09.                                                     
+030000                                                                              
+032000 INPUT-OUTPUT SECTION.                                                        
+033000 FILE-CONTROL.                                                                
+034000    SELECT INPUT-FILE ASSIGN TO DISK.                                         
+035000                                                                              
+044000 DATA DIVISION.                                                               
+045000 FILE SECTION.                                                                
+045500 FD  INPUT-FILE                                                               
+046000     VALUE OF DEPENDENTSPECS IS TRUE.                                         
+047000 01 FILE-REC.                                                                 
+050000     05                     FILE-EMP-NAME PIC X(10).                          
+051000     05                     FILLER      PIC X(1).                             
+052000     05                     FILE-EMP-AGE  PIC 9(2).                           
+053000     05                     FILLER      PIC X(1).                             
+054000     05                     FILE-EMP-CITY PIC X(10).                          
+055000                                                                              
+062000 DATA-BASE SECTION.                                                           
+062250 DB  EMPLOYEEDB.                                                              
+062500 01  EMPLOYEE.                                                                
+062750 01  RSTART.                                                                  
+063000                                                                              
+064000 WORKING-STORAGE SECTION.                                                     
+064333 01  RESULT                      PIC X(6).                                    
+064666 01  MSG                         PIC X(100).                                  
+065000                                                                              
+066000 01  WS-NO                       PIC X(01) VALUE "N".                         
+067000 01  WS-YES                      PIC X(01) VALUE "Y".                         
+068000 01  WS-PERIOD                   PIC X(01) VALUE ".".                         
+069000                                                                              
+070000 01  WS-MORE-DATA-FLAG           PIC X(01) VALUE "Y".                         
+071000     88 WS-NO-MORE-DATA                    VALUE "N".                         
+080000 01  WS-EMP-ID                   PIC 9(5).                                    
+081000*****************************************************************             
+082000                                                                              
+083000 PROCEDURE DIVISION.                                                          
+084000                                                                              
+085000 A000.                                                                        
+086000     OPEN INPUT INPUT-FILE.                                                   
+086250     OPEN UPDATE EMPLOYEEDB                                                   
+086500        ON EXCEPTION                                                          
+086750            GO TO DMEXCEPT.                                                   
+086781                                                                              
+086812     FIND LAST EMP-ID-SET                                                     
+086843            ON EXCEPTION                                                      
+086874            IF DMSTATUS(NOTFOUND)                                             
+086905                MOVE 1 TO WS-EMP-ID                                           
+086936            ELSE GO TO DMEXCEPT.                                              
+086967     MOVE EMP-ID    TO WS-EMP-ID.                                             
+087000                                                                              
+088000     PERFORM B000 UNTIL WS-NO-MORE-DATA.                                      
+089000     CLOSE INPUT-FILE.                                                        
+089500     CLOSE EMPLOYEEDB.                                                        
+090000 A000-EXIT. EXIT.                                                             
+091000                                                                              
+092000 B000.                                                                        
+092500     ADD 1 TO WS-EMP-ID.                                                      
+093000     READ INPUT-FILE                                                          
+094000        AT END MOVE "N" TO WS-MORE-DATA-FLAG                                  
+094500        GO TO C000-EXIT.                                                      
+094583                                                                              
+094666     DISPLAY "EMPLOYEE NAME: " FILE-EMP-NAME.                                 
+094749     DISPLAY "EMPLOYEE AGE: " FILE-EMP-AGE.                                   
+094832     DISPLAY "EMPLOYEE CITY: "FILE-EMP-CITY.                                  
+094834     CREATE EMPLOYEE                                                          
+094836        ON EXCEPTION                                                          
+094838          GO TO DMEXCEPT.                                                     
+094840        MOVE WS-EMP-ID TO EMP-ID.                                             
+094842        MOVE FILE-EMP-NAME TO EMP-NAME.                                       
+094844        MOVE FILE-EMP-AGE TO EMP-AGE.                                         
+094846        MOVE FILE-EMP-CITY TO EMP-CITY.                                       
+094848                                                                              
+094850        BEGIN-TRANSACTION NO-AUDIT RSTART                                     
+094852            ON EXCEPTION                                                      
+094854             GO TO DMEXCEPT.                                                  
+094856        STORE EMPLOYEE                                                        
+094858            ON EXCEPTION                                                      
+094860            GO TO DMEXCEPT.                                                   
+094862        END-TRANSACTION NO-AUDIT RSTART                                       
+094864            ON EXCEPTION                                                      
+094866            GO TO DMEXCEPT.                                                   
+094873                                                                              
+094915                                                                              
+095000                                                                              
+096000 DMEXCEPT.                                                                    
+096090                                                                              
+096180     MOVE DMSTATUS(DMRESULT) TO RESULT.                                       
+096270     CALL "DMEXCEPTIONTEXT OF DMSUPPORT/EMPLOYEEDB"                           
+096360        USING RESULT, MSG.                                                    
+096450     DISPLAY "***************** DATABASE ERROR *****************".            
+096540     DISPLAY "DATABASE = EMPLOYEEDB                             ".            
+096630     DISPLAY "DMSUPPORT ERROR MESSAGE FOLLOWING...              ".            
+096720     DISPLAY MSG.                                                             
+096810     DISPLAY "**************************************************".            
+096900     GO TO  C000-EXIT.                                                        
+096950                                                                              
+097000 C000-EXIT.                                                                   
+098000     STOP RUN.                                                                
+099000                                                                              
